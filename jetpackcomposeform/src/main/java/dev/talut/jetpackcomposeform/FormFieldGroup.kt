@@ -1,5 +1,6 @@
 package dev.talut.jetpackcomposeform
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
@@ -32,16 +33,15 @@ fun FormFieldGroup(
         }
     }
 
-    FormFieldLayout(
+    Column(
         modifier = Modifier
             .then(modifier)
             .onGloballyPositioned {
                 onLayoutChange?.invoke(field.fieldName, it.boundsInParent())
-            },
+            }
     ) {
         content(register, onError(field, groupFields))
     }
-
 }
 
 

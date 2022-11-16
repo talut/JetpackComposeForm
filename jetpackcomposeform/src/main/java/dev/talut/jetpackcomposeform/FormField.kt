@@ -1,5 +1,6 @@
 package dev.talut.jetpackcomposeform
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusState
@@ -37,7 +38,7 @@ fun FormField(
     val error = if (formField.hasError()) formField.errors.firstOrNull() else null
 
 
-    FormFieldLayout(
+    Column(
         modifier = Modifier
             .then(modifier)
             .onGloballyPositioned {
@@ -46,7 +47,6 @@ fun FormField(
     ) {
         content(formField, onFocusEvent, error)
     }
-
 }
 
 

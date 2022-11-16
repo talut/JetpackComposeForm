@@ -4,13 +4,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.geometry.Rect
 import io.konform.validation.Validation
 
-private typealias FormViewContent = @Composable (
-    register: (fieldName: String) -> FormManagerItem,
-    onFocusRemoved: (fieldName: String) -> Unit,
-    onFieldLayoutChange: (fieldName: String, bounds: Rect) -> Unit,
-    onSubmit: () -> Unit,
-) -> Unit
-
 
 @Composable
 fun <T> FormView(
@@ -18,7 +11,12 @@ fun <T> FormView(
     validationSchema: Validation<T>,
     scrollToFirstError: ((fieldBounds: Rect) -> Unit)? = null,
     onSubmit: (T) -> Unit,
-    content: FormViewContent,
+    content: @Composable (
+        register: (fieldName: String) -> FormManagerItem,
+        onFocusRemoved: (fieldName: String) -> Unit,
+        onFieldLayoutChange: (fieldName: String, bounds: Rect) -> Unit,
+        onSubmit: () -> Unit,
+    ) -> Unit,
 ) {
 
     var formFields: List<FormManagerItem> by remember { mutableStateOf(createFormManagerList(values)) }

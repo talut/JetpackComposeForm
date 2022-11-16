@@ -6,8 +6,6 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 
-private typealias FormFieldGroupContent = @Composable (register: (field: FormManagerItem) -> FormManagerItem, error: String?) -> Unit
-
 @Composable
 fun FormFieldGroup(
     modifier: Modifier = Modifier,
@@ -15,7 +13,7 @@ fun FormFieldGroup(
     onFocusRemoved: ((fieldName: String) -> Unit)? = null,
     onLayoutChange: ((fieldName: String, bounds: Rect) -> Unit)? = null,
     onError: (field: FormManagerItem, groupFields: List<FormManagerItem>) -> String?,
-    content: FormFieldGroupContent,
+    content: @Composable (register: (field: FormManagerItem) -> FormManagerItem, error: String?) -> Unit,
 ) {
     var groupFields by remember { mutableStateOf(emptyList<FormManagerItem>()) }
 

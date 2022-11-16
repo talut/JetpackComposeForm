@@ -8,15 +8,13 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 
-private typealias FormFieldContent = @Composable (field: FormManagerItem, onFocusEvent: (FocusState) -> Unit, error: String?) -> Unit
-
 @Composable
 fun FormField(
     modifier: Modifier = Modifier,
     field: FormManagerItem,
     onFocusRemoved: ((fieldName: String) -> Unit)? = null,
     onLayoutChange: ((fieldName: String, bounds: Rect) -> Unit)? = null,
-    content: FormFieldContent,
+    content: @Composable (field: FormManagerItem, onFocusEvent: (FocusState) -> Unit, error: String?) -> Unit,
 ) {
     var hadFocus by remember { mutableStateOf(false) }
     var isFocusRemoved by remember { mutableStateOf(false) }

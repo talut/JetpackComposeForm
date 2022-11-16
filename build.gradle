@@ -1,0 +1,34 @@
+buildscript {
+    ext {
+        compose_version = '1.0.0-beta02'
+        kotlin_version = '1.4.31'
+        core_version = '1.5.0-beta03'
+        espresso_core_version = '3.3.0'
+        junit_androidx_version = '1.1.2'
+        junit_version = '4.13.2'
+        desugar_jdk_libs_version = '1.1.5'
+        android_maven_gradle_plugin_version = "2.1"
+    }
+    repositories {
+        google()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.2.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath"com.github.dcendents:android-maven-gradle-plugin:$android_maven_gradle_plugin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        maven { url 'https://jitpack.io' }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

@@ -3,7 +3,6 @@ package dev.talut.jetpackcomposeform
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusState
-import androidx.compose.ui.focus.isFocused
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -22,11 +21,11 @@ fun FormField(
 
 
     val onFocusEvent: (FocusState) -> Unit = { fState ->
-        if (fState.isFocused) {
+        if (fState.hasFocus) {
             hadFocus = true
             isFocusRemoved = false
         }
-        if (!fState.isFocused && hadFocus) {
+        if (!fState.hasFocus && hadFocus) {
             isFocusRemoved = true
         }
     }

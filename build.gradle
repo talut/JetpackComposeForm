@@ -1,8 +1,8 @@
 buildscript {
     ext {
         compose_version = '1.2.0'
-        kotlin_version = '1.4.31'
-        core_version = '1.5.0-beta03'
+        kotlin_version = '1.7.0'
+        core_version = '1.8.0'
         espresso_core_version = '3.3.0'
         junit_androidx_version = '1.1.2'
         junit_version = '4.13.2'
@@ -17,7 +17,7 @@ buildscript {
 }
 
 plugins {
-    id 'org.jetbrains.kotlin.android' version '1.4.31' apply false
+    id 'org.jetbrains.kotlin.android' version '1.7.0' apply false
 }
 
 task clean(type: Delete) {

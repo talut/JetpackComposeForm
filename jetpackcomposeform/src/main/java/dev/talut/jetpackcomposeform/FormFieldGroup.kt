@@ -14,7 +14,7 @@ fun FormFieldGroup(
     onFocusRemoved: ((fieldName: String) -> Unit)? = null,
     onLayoutChange: ((fieldName: String, bounds: Rect) -> Unit)? = null,
     onError: (field: FormManagerItem, groupFields: List<FormManagerItem>) -> String?,
-    content: @Composable (register: (field: FormManagerItem) -> FormManagerItem, error: String?) -> Unit,
+    content: @Composable (groupField: FormManagerItem, register: (field: FormManagerItem) -> FormManagerItem, error: String?) -> Unit,
 ) {
     var groupFields by remember { mutableStateOf(emptyList<FormManagerItem>()) }
 
@@ -40,7 +40,7 @@ fun FormFieldGroup(
                 onLayoutChange?.invoke(field.fieldName, it.boundsInParent())
             }
     ) {
-        content(register, onError(field, groupFields))
+        content(field, register, onError(field, groupFields))
     }
 }
 

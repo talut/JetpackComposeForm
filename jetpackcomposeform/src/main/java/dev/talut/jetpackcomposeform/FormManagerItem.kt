@@ -1,6 +1,7 @@
 package dev.talut.jetpackcomposeform
 
 import androidx.compose.ui.geometry.Rect
+import java.time.LocalDate
 import java.util.*
 
 
@@ -17,19 +18,7 @@ fun <T> createFormManagerList(fieldClass: T): List<FormManagerItem> {
         clazz::class.java.declaredFields.filter {
             it.name != "\$stable"
         }.map {
-            when (it.type) {
-                String::class.java -> formManagerList.add(FormManagerItem(".${it.name}"))
-                Boolean::class.java -> formManagerList.add(FormManagerItem(".${it.name}"))
-                Int::class.java -> formManagerList.add(FormManagerItem(".${it.name}"))
-                Date::class.java -> formManagerList.add(FormManagerItem(".${it.name}"))
-                else -> {
-                    it.type.declaredFields.filter { f ->
-                        f.name != "\$stable"
-                    }.map { f ->
-                        formManagerList.add(FormManagerItem(".${it.name}.${f.name}"))
-                    }
-                }
-            }
+            formManagerList.add(FormManagerItem(".${it.name}"))
         }
     }
     return formManagerList

@@ -1,6 +1,5 @@
 package dev.talut.jetpackcomposeform
 
-import android.util.Log
 import io.konform.validation.Constraint
 import io.konform.validation.ValidationBuilder
 import io.konform.validation.ValidationResult

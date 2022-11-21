@@ -1,10 +1,10 @@
 package dev.talut.jetpackcomposeform.field
 
-import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.focus.FocusState
+import androidx.compose.ui.geometry.Rect
 import io.konform.validation.Validation
 
 
@@ -29,6 +29,7 @@ class Field<T>(
     val isDirty: MutableState<Boolean>,
     val hasFocus: MutableState<Boolean>,
     val isValid: MutableState<Boolean>,
+    val bounds: MutableState<Rect>,
     val validator: MutableState<Validation<T>?>,
 ) {
     val value: T
@@ -60,6 +61,9 @@ class Field<T>(
             return error.value.isNotEmpty()
         }
 
+    fun setBounds(rect: Rect) {
+        bounds.value = rect
+    }
 
     fun validate() {
         validator.value?.let {

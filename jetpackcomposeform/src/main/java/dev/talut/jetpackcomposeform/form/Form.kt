@@ -1,8 +1,10 @@
 package dev.talut.jetpackcomposeform.form
 
+import android.util.Log
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.geometry.Rect
 import dev.talut.jetpackcomposeform.field.Field
 import kotlin.reflect.KProperty1
 
@@ -16,16 +18,30 @@ import kotlin.reflect.KProperty1
 @Stable
 class Form<T>(values: T) {
 
-    var formFields: Map<String, Field<*>> = emptyMap()
+    private var formFields: Map<String, Field<*>> = emptyMap()
+
+    private var formFieldsOrder: List<String> = emptyList()
 
     init {
         if (formFields.isEmpty()) {
             formFields = createFields(values)
+            formFields.map {
+                Log.d("Form", "Field: ${it.key}")
+            }
         }
+    }
+
+
+    fun getFirstErrorPosition(): Rect {
+        val firstError = formFieldsOrder.firstOrNull { formFields[it]?.hasError == true }
+        return formFields[firstError]?.bounds?.value ?: Rect.Zero
     }
 
     @Suppress("UNCHECKED_CAST")
     fun <VType> getField(name: String): Field<VType>? {
+        if (!formFieldsOrder.contains(name)) {
+            formFieldsOrder = formFieldsOrder + name
+        }
         return formFields[name] as? Field<VType>
     }
 
@@ -48,7 +64,8 @@ class Form<T>(values: T) {
                         isTouched = mutableStateOf(false),
                         validator = mutableStateOf(null),
                         isValid = mutableStateOf(false),
-                        hasFocus = mutableStateOf(false)
+                        hasFocus = mutableStateOf(false),
+                        bounds = mutableStateOf(Rect.Zero),
                     )
                     else -> Field<Any>(
                         ".${field.name}",
@@ -58,7 +75,8 @@ class Form<T>(values: T) {
                         isTouched = mutableStateOf(false),
                         validator = mutableStateOf(null),
                         isValid = mutableStateOf(false),
-                        hasFocus = mutableStateOf(false)
+                        hasFocus = mutableStateOf(false),
+                        bounds = mutableStateOf(Rect.Zero),
                     )
                 }
             }
@@ -78,7 +96,12 @@ class Form<T>(values: T) {
         return isValid
     }
 
-
+    fun getValues(): Map<String, Any?> {
+        val values = formFields.map { (key, value) ->
+            key to value.fieldValue.value
+        }.toMap()
+        return values
+    }
 }
 
 

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 import dev.talut.jetpackcomposeform.field.Field
 import io.konform.validation.Validation
@@ -26,6 +27,7 @@ inline fun <T> FormField(
             modifier = Modifier
                 .then(modifier)
                 .onGloballyPositioned {
+                    f.setBounds(it.boundsInParent())
                 }
         ) {
             content(f)

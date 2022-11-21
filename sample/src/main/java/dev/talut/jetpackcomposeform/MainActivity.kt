@@ -6,17 +6,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
@@ -26,6 +20,7 @@ import dev.talut.jetpackcomposeform.ui.theme.JetpackcomposeformTheme
 import io.konform.validation.Validation
 import io.konform.validation.jsonschema.minLength
 import io.konform.validation.jsonschema.pattern
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,10 +54,12 @@ fun FormTest() {
     val values by remember { mutableStateOf(TestForm()) }
     val formState = remember(values) { Form(values) }
 
+    val coroutineScope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
             .padding(16.dp)
     ) {
         FormField<String>(
@@ -110,11 +107,60 @@ fun FormTest() {
             Text(text = "Last name is touched: ${field.touched}")
         }
 
+        FormField<String>(
+            field = formState.getField(".phoneNumber"),
+            validator = Validation {
+                minLength(3)
+            }
+        ) { field ->
+            TextField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged(field::onFocusChange),
+                value = field.value,
+                isError = field.hasError,
+                onValueChange = field::onValueChange,
+            )
+            Text(text = "Phone number: ${field.value}")
+            Text(text = "Phone number has focus: ${field.focused}")
+            Text(text = "Phone number has error: ${field.hasError}")
+            Text(text = "Phone number is valid: ${field.valid}")
+            Text(text = "Phone number is dirty: ${field.dirty}")
+            Text(text = "Phone number is touched: ${field.touched}")
+        }
+
+        FormField<String>(
+            field = formState.getField(".email"),
+            validator = Validation {
+                minLength(3)
+            }
+        ) { field ->
+            TextField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged(field::onFocusChange),
+                value = field.value,
+                isError = field.hasError,
+                onValueChange = field::onValueChange,
+            )
+            Text(text = "Email: ${field.value}")
+            Text(text = "Email has focus: ${field.focused}")
+            Text(text = "Email has error: ${field.hasError}")
+            Text(text = "Email is valid: ${field.valid}")
+            Text(text = "Email is dirty: ${field.dirty}")
+            Text(text = "Email is touched: ${field.touched}")
+        }
+
+        Spacer(modifier = Modifier.height(1000.dp))
+
         Button(onClick = {
             if (formState.validate()) {
-                Log.d("Form", "Form is valid")
+                Log.d("Form", "Form is valid & ${formState.getValues()}")
             } else {
-                Log.d("Form", "Form is invalid")
+                coroutineScope.launch {
+                    val firstInvalidField = formState.getFirstErrorPosition().top
+                    scrollState.animateScrollTo(firstInvalidField.toInt())
+                }
             }
         }) {
             Text(text = "Submit")
@@ -125,4 +171,6 @@ fun FormTest() {
 data class TestForm(
     val firstName: String = "",
     val lastName: String = "",
+    val phoneNumber: String = "",
+    val email: String = "",
 )

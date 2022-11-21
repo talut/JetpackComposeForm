@@ -1,51 +1,35 @@
 package dev.talut.jetpackcomposeform
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusState
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
+import dev.talut.jetpackcomposeform.field.Field
+import io.konform.validation.Validation
 
 @Composable
-fun FormField(
+inline fun <T> FormField(
+    field: Field<T>?,
     modifier: Modifier = Modifier,
-    field: FormManagerItem,
-    onFocusRemoved: ((fieldName: String) -> Unit)? = null,
-    onLayoutChange: ((fieldName: String, bounds: Rect) -> Unit)? = null,
-    content: @Composable (field: FormManagerItem, onFocusEvent: (FocusState) -> Unit, error: String?) -> Unit,
+    validator: Validation<T>? = null,
+    content: @Composable (
+        field: Field<T>,
+    ) -> Unit,
 ) {
-    var hadFocus by remember { mutableStateOf(false) }
-    var isFocusRemoved by remember { mutableStateOf(false) }
-    val formField by remember(field) { mutableStateOf(field) }
-
-
-    val onFocusEvent: (FocusState) -> Unit = { fState ->
-        if (fState.hasFocus) {
-            hadFocus = true
-            isFocusRemoved = false
+    val f = remember(field) { field }
+    if (f != null) {
+        validator?.let {
+            f.setValidator(it)
         }
-        if (!fState.hasFocus && hadFocus) {
-            isFocusRemoved = true
+        Column(
+            modifier = Modifier
+                .then(modifier)
+                .onGloballyPositioned {
+                }
+        ) {
+            content(f)
         }
-    }
-
-    if (isFocusRemoved) {
-        onFocusRemoved?.invoke(formField.fieldName)
-    }
-
-    val error = if (formField.hasError()) formField.errors.firstOrNull() else null
-
-
-    Column(
-        modifier = Modifier
-            .then(modifier)
-            .onGloballyPositioned {
-                onLayoutChange?.invoke(formField.fieldName, it.boundsInParent())
-            }
-    ) {
-        content(formField, onFocusEvent, error)
     }
 }
 

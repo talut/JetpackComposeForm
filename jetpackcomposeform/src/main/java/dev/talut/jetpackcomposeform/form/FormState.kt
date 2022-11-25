@@ -11,7 +11,7 @@ interface FormState<T> {
      * @param propertyName The name of the field
      * @return The [FormField] with the given name
      */
-    fun <VType> getFormField(propertyName: String): FormField<VType>
+    fun <VType> getField(propertyName: String): FormField<VType>
 
     /** validate
      * @return true if all fields are valid

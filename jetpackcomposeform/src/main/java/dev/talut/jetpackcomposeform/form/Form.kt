@@ -4,13 +4,13 @@ import android.util.Log
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Rect
-import dev.talut.jetpackcomposeform.formField.Field
+import dev.talut.jetpackcomposeform.formField.FormField
 import kotlin.reflect.KProperty1
 
 @Stable
 class Form<T>(values: T) : FormState<T> {
 
-    private var formFields: Map<String, Field<*>> = emptyMap()
+    private var formFields: Map<String, FormField<*>> = emptyMap()
 
     private var formFieldsOrder: List<String> = emptyList()
 
@@ -25,13 +25,13 @@ class Form<T>(values: T) : FormState<T> {
 
 
     /**
-     * Get a [Field] by its name
+     * Get a [FormField] by its name
      *
      * @param propertyName The name of the field
-     * @return The [Field] with the given name
+     * @return The [FormField] with the given name
      */
     @Suppress("UNCHECKED_CAST")
-    override fun <VType> getField(propertyName: String): Field<VType> {
+    override fun <VType> getField(propertyName: String): FormField<VType> {
         if (!formFieldsOrder.contains(propertyName)) {
             formFieldsOrder = formFieldsOrder + propertyName
         }
@@ -39,7 +39,7 @@ class Form<T>(values: T) : FormState<T> {
             throw IllegalArgumentException("Field $propertyName not found")
         }
         try {
-            return formFields[propertyName] as Field<VType>
+            return formFields[propertyName] as FormField<VType>
         } catch (e: Exception) {
             throw IllegalArgumentException("Field $propertyName is not correct type for cast")
         }
@@ -48,13 +48,13 @@ class Form<T>(values: T) : FormState<T> {
     /**
      * Create a map of fields from the given values
      */
-    private fun <T> createFields(data: T): Map<String, Field<*>> {
+    private fun <T> createFields(data: T): Map<String, FormField<*>> {
         val items = data?.let { clazz ->
             clazz::class.java.declaredFields.filter {
                 it.name != "\$stable"
             }.map { field ->
                 when (field.type) {
-                    String::class.java -> Field(
+                    String::class.java -> FormField(
                         ".${field.name}",
                         isDirty = mutableStateOf(
                             (readInstanceProperty<String?>(
@@ -73,7 +73,7 @@ class Form<T>(values: T) : FormState<T> {
                         hasFocus = mutableStateOf(false),
                         bounds = mutableStateOf(Rect.Zero),
                     )
-                    else -> Field(
+                    else -> FormField(
                         ".${field.name}",
                         isDirty = mutableStateOf((readInstanceProperty<Any?>(clazz, field.name)) != null),
                         fieldValue = mutableStateOf(readInstanceProperty(clazz, field.name)),

@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
@@ -51,8 +53,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun FormTest() {
-    val values by remember { mutableStateOf(TestForm()) }
-    val formState = remember(values) { Form(values) }
+    val formState = remember { Form(TestForm()) }
 
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
@@ -62,11 +63,13 @@ fun FormTest() {
             .verticalScroll(scrollState)
             .padding(16.dp)
     ) {
-        FormField<String>(
-            field = formState.getField(".firstName"),
+        Field<String>(
+            field = formState.getField<String>(".buildingName"),
             validator = Validation {
-                minLength(3)
-                pattern("[a-zA-Z]+")
+                if (formState.getValue<String>(".buildingNumber").isEmpty()) {
+                    minLength(1)
+                    pattern("[a-zA-Z]+")
+                }
             }
         ) { field ->
             TextField(
@@ -75,20 +78,26 @@ fun FormTest() {
                     .onFocusChanged(field::onFocusChange),
                 value = field.value,
                 isError = field.hasError,
-                onValueChange = field::onValueChange,
+                onValueChange = {
+                    field.onValueChange(it)
+                    formState.getField<String>(".buildingNumber").validate()
+                },
             )
-            Text(text = "First name: ${field.value}")
-            Text(text = "First name has focus: ${field.focused}")
-            Text(text = "First name has error: ${field.hasError}")
-            Text(text = "First name is valid: ${field.valid}")
-            Text(text = "First name is dirty: ${field.dirty}")
-            Text(text = "First name is touched: ${field.touched}")
+            Text(text = "Building name: ${field.value}")
+            Text(text = "Building name has focus: ${field.focused}")
+            Text(text = "Building name has error: ${field.hasError}")
+            Text(text = "Building name is valid: ${field.valid}")
+            Text(text = "Building name is dirty: ${field.dirty}")
+            Text(text = "Building name is touched: ${field.touched}")
         }
 
-        FormField<String>(
-            field = formState.getField(".lastName"),
+        Field<String>(
+            field = formState.getField<String>(".buildingNumber"),
             validator = Validation {
-                minLength(3)
+                if (formState.getValue<String>(".buildingName").isEmpty()) {
+                    minLength(1)
+                    pattern("[a-zA-Z]+")
+                }
             }
         ) { field ->
             TextField(
@@ -97,58 +106,17 @@ fun FormTest() {
                     .onFocusChanged(field::onFocusChange),
                 value = field.value,
                 isError = field.hasError,
-                onValueChange = field::onValueChange,
+                onValueChange = {
+                    field.onValueChange(it)
+                    formState.getField<String>(".buildingName").validate()
+                },
             )
-            Text(text = "Last name: ${field.value}")
-            Text(text = "Last name has focus: ${field.focused}")
-            Text(text = "Last name has error: ${field.hasError}")
-            Text(text = "Last name is valid: ${field.valid}")
-            Text(text = "Last name is dirty: ${field.dirty}")
-            Text(text = "Last name is touched: ${field.touched}")
-        }
-
-        FormField<String>(
-            field = formState.getField(".phoneNumber"),
-            validator = Validation {
-                minLength(3)
-            }
-        ) { field ->
-            TextField(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onFocusChanged(field::onFocusChange),
-                value = field.value,
-                isError = field.hasError,
-                onValueChange = field::onValueChange,
-            )
-            Text(text = "Phone number: ${field.value}")
-            Text(text = "Phone number has focus: ${field.focused}")
-            Text(text = "Phone number has error: ${field.hasError}")
-            Text(text = "Phone number is valid: ${field.valid}")
-            Text(text = "Phone number is dirty: ${field.dirty}")
-            Text(text = "Phone number is touched: ${field.touched}")
-        }
-
-        FormField<String>(
-            field = formState.getField(".email"),
-            validator = Validation {
-                minLength(3)
-            }
-        ) { field ->
-            TextField(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onFocusChanged(field::onFocusChange),
-                value = field.value,
-                isError = field.hasError,
-                onValueChange = field::onValueChange,
-            )
-            Text(text = "Email: ${field.value}")
-            Text(text = "Email has focus: ${field.focused}")
-            Text(text = "Email has error: ${field.hasError}")
-            Text(text = "Email is valid: ${field.valid}")
-            Text(text = "Email is dirty: ${field.dirty}")
-            Text(text = "Email is touched: ${field.touched}")
+            Text(text = "Building number: ${field.value}")
+            Text(text = "Building number has focus: ${field.focused}")
+            Text(text = "Building number has error: ${field.hasError}")
+            Text(text = "Building number is valid: ${field.valid}")
+            Text(text = "Building number is dirty: ${field.dirty}")
+            Text(text = "Building number is touched: ${field.touched}")
         }
 
         Spacer(modifier = Modifier.height(1000.dp))
@@ -158,7 +126,7 @@ fun FormTest() {
                 Log.d("Form", "Form is valid & ${formState.getValues()}")
             } else {
                 coroutineScope.launch {
-                    val firstInvalidField = formState.getFirstErrorPosition().top
+                    val firstInvalidField = formState.getFirstErrorBounds().top
                     scrollState.animateScrollTo(firstInvalidField.toInt())
                 }
             }
@@ -169,8 +137,6 @@ fun FormTest() {
 }
 
 data class TestForm(
-    val firstName: String = "",
-    val lastName: String = "",
-    val phoneNumber: String = "",
-    val email: String = "",
+    val buildingName: String = "",
+    val buildingNumber: String = "",
 )

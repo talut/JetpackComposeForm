@@ -6,16 +6,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
-import dev.talut.jetpackcomposeform.field.Field
+import dev.talut.jetpackcomposeform.formField.FormField
 import io.konform.validation.Validation
 
 @Composable
-inline fun <T> FormField(
-    field: Field<T>?,
+inline fun <VType> Field(
+    field: FormField<VType>?,
     modifier: Modifier = Modifier,
-    validator: Validation<T>? = null,
+    validator: Validation<VType>? = null,
     content: @Composable (
-        field: Field<T>,
+        field: FormField<VType>,
     ) -> Unit,
 ) {
     val f = remember(field) { field }

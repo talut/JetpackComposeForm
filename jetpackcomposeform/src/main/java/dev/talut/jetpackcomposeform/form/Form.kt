@@ -3,20 +3,12 @@ package dev.talut.jetpackcomposeform.form
 import android.util.Log
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Rect
-import dev.talut.jetpackcomposeform.field.Field
+import dev.talut.jetpackcomposeform.formField.Field
 import kotlin.reflect.KProperty1
 
-
-/**
- * Create and [remember] the [Form] based on the currently appropriate scroll
- * configuration to allow changing scroll position or observing scroll behavior.
- *
- */
-
 @Stable
-class Form<T>(values: T) {
+class Form<T>(values: T) : FormState<T> {
 
     private var formFields: Map<String, Field<*>> = emptyMap()
 
@@ -32,46 +24,60 @@ class Form<T>(values: T) {
     }
 
 
-    fun getFirstErrorPosition(): Rect {
-        val firstError = formFieldsOrder.firstOrNull { formFields[it]?.hasError == true }
-        return formFields[firstError]?.bounds?.value ?: Rect.Zero
-    }
-
+    /**
+     * Get a [Field] by its name
+     *
+     * @param propertyName The name of the field
+     * @return The [Field] with the given name
+     */
     @Suppress("UNCHECKED_CAST")
-    fun <VType> getField(name: String): Field<VType>? {
-        if (!formFieldsOrder.contains(name)) {
-            formFieldsOrder = formFieldsOrder + name
+    override fun <VType> getField(propertyName: String): Field<VType> {
+        if (!formFieldsOrder.contains(propertyName)) {
+            formFieldsOrder = formFieldsOrder + propertyName
         }
-        return formFields[name] as? Field<VType>
+        if (formFields[propertyName] == null) {
+            throw IllegalArgumentException("Field $propertyName not found")
+        }
+        try {
+            return formFields[propertyName] as Field<VType>
+        } catch (e: Exception) {
+            throw IllegalArgumentException("Field $propertyName is not correct type for cast")
+        }
     }
 
+    /**
+     * Create a map of fields from the given values
+     */
     private fun <T> createFields(data: T): Map<String, Field<*>> {
         val items = data?.let { clazz ->
             clazz::class.java.declaredFields.filter {
                 it.name != "\$stable"
             }.map { field ->
                 when (field.type) {
-                    String::class.java -> Field<String>(
+                    String::class.java -> Field(
                         ".${field.name}",
                         isDirty = mutableStateOf(
-                            (readInstanceProperty(clazz, field.name) as String?) != null && (readInstanceProperty(
+                            (readInstanceProperty<String?>(
                                 clazz,
                                 field.name
-                            ) as String?) != ""
+                            )) != null && (readInstanceProperty<String?>(
+                                clazz,
+                                field.name
+                            )) != ""
                         ),
-                        fieldValue = mutableStateOf(readInstanceProperty(clazz, field.name)),
-                        error = mutableStateOf(emptyList()),
+                        fieldValue = mutableStateOf(readInstanceProperty<String?>(clazz, field.name)),
+                        errors = mutableStateOf(emptyList()),
                         isTouched = mutableStateOf(false),
                         validator = mutableStateOf(null),
                         isValid = mutableStateOf(false),
                         hasFocus = mutableStateOf(false),
                         bounds = mutableStateOf(Rect.Zero),
                     )
-                    else -> Field<Any>(
+                    else -> Field(
                         ".${field.name}",
-                        isDirty = mutableStateOf((readInstanceProperty(clazz, field.name) as Any?) != null),
+                        isDirty = mutableStateOf((readInstanceProperty<Any?>(clazz, field.name)) != null),
                         fieldValue = mutableStateOf(readInstanceProperty(clazz, field.name)),
-                        error = mutableStateOf(emptyList()),
+                        errors = mutableStateOf(emptyList()),
                         isTouched = mutableStateOf(false),
                         validator = mutableStateOf(null),
                         isValid = mutableStateOf(false),
@@ -85,31 +91,74 @@ class Form<T>(values: T) {
     }
 
 
-    fun validate(): Boolean {
+    /** validate
+     * @return true if all fields are valid
+     */
+    override fun validate(): Boolean {
         var isValid = true
         formFields.forEach { (_, field) ->
             field.validate()
-            if (field.error.value.isNotEmpty()) {
+            if (field.errors.value.isNotEmpty()) {
                 isValid = false
             }
         }
         return isValid
     }
 
-    fun getValues(): Map<String, Any?> {
+    /**
+     * Read the values of the properties of the given instance.
+     *
+     * @return The value of the property.
+     */
+    override fun getValues(): Map<String, Any?> {
         val values = formFields.map { (key, value) ->
-            key to value.fieldValue.value
+            key to value.value
         }.toMap()
         return values
+    }
+
+
+    /**
+     * Read the value of a property from an instance of a class.
+     *
+     * @param propertyName The name of the property to read.
+     * @return The value of the property.
+     */
+    @Suppress("UNCHECKED_CAST")
+    override fun <VType> getValue(propertyName: String): VType {
+        formFields[propertyName]?.let {
+            return it.value as VType
+        } ?: run {
+            throw Exception("Field $propertyName not found")
+        }
+    }
+
+    /**
+     * Get the first field with error
+     *
+     * @return The bound as [Rect] of the field
+     */
+    override fun getFirstErrorBounds(): Rect {
+        val firstError = formFieldsOrder.firstOrNull { formFields[it]?.hasError == true }
+        return formFields[firstError]?.bounds?.value ?: Rect.Zero
     }
 }
 
 
+/**
+ * Read the value of a property from an instance of a class.
+ * @param instance The instance of the class to read.
+ * @param propertyName The name of the property to read.
+ * @return The value of the property.
+ */
 @Suppress("UNCHECKED_CAST")
-fun <R> readInstanceProperty(instance: Any, propertyName: String): R {
+fun <IType> readInstanceProperty(instance: Any?, propertyName: String): IType {
+    if (instance == null) {
+        throw Exception("Instance is null")
+    }
     val property = instance::class.members
         // don't cast here to <Any, R>, it would succeed silently
         .first { it.name == propertyName } as KProperty1<Any, *>
     // force a invalid cast exception if incorrect type here
-    return property.get(instance) as R
+    return property.get(instance) as IType
 }

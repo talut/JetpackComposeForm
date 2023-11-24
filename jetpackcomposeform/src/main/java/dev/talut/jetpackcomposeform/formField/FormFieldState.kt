@@ -1,6 +1,5 @@
 package dev.talut.jetpackcomposeform.formField
 
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.geometry.Rect
 import io.konform.validation.Validation
@@ -49,18 +48,14 @@ interface FormFieldState<T> {
     /**
      * Input's bound as [Rect] value related to the parent view.
      */
-    val bounds: MutableState<Rect>
+    val bounds: Rect
 
 
     /**
      * Input errors.
      */
-    val errors: MutableState<List<String>>
+    val errors: List<String>
 
-    /**
-     * Validation rules for the input.
-     */
-    val validator: MutableState<Validation<T>?>
 
     /**
      * A function which sends the input's value to the library.
@@ -72,17 +67,15 @@ interface FormFieldState<T> {
      */
     fun onFocusChange(state: FocusState)
 
-
-    /**
-     * A function sets validation rules for the input.
-     */
-    fun setValidator(validator: Validation<T>)
-
     /**
      * A function sets bounds as [Rect] of the input.
      */
     fun setBounds(rect: Rect)
 
+    /**
+     * A function sets validation rules for the input.
+     */
+    fun setValidator(validator: Validation<T>)
 
 }
 

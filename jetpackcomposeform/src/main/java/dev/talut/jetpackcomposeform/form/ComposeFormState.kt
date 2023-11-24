@@ -2,8 +2,9 @@ package dev.talut.jetpackcomposeform.form
 
 import androidx.compose.ui.geometry.Rect
 import dev.talut.jetpackcomposeform.formField.FormField
+import io.konform.validation.Validation
 
-interface FormState<T> {
+interface ComposeFormState<T> {
 
     /**
      * Get a [FormField] by its name
@@ -23,8 +24,7 @@ interface FormState<T> {
      *
      * @return The value of the property.
      */
-    fun getValues(): Map<String, Any?>
-
+    fun getValues(): Map<String, *>
 
 
     /**
@@ -42,6 +42,9 @@ interface FormState<T> {
      * @return The bound as [Rect] of the field
      */
     fun getFirstErrorBounds(): Rect
+
+
+    fun handleSubmit(onSubmit: (Map<String, *>) -> Unit): Boolean
 
 }
 

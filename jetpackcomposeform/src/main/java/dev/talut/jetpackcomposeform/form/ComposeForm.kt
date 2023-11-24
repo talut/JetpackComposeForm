@@ -1,28 +1,22 @@
 package dev.talut.jetpackcomposeform.form
 
-import android.util.Log
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Rect
 import dev.talut.jetpackcomposeform.formField.FormField
+import io.konform.validation.Validation
 import kotlin.reflect.KProperty1
 
 @Stable
-class Form<T>(values: T) : FormState<T> {
+class ComposeForm<T>(values: T) : ComposeFormState<T> {
 
-    private var formFields: Map<String, FormField<*>> = emptyMap()
+
+    private var formFields: Map<String, FormField<*>> = mutableMapOf()
 
     private var formFieldsOrder: List<String> = emptyList()
 
     init {
-        if (formFields.isEmpty()) {
-            formFields = createFields(values)
-            formFields.map {
-                Log.d("Form", "Field: ${it.key}")
-            }
-        }
+        formFields = createFields(values).toMutableMap()
     }
-
 
     /**
      * Get a [FormField] by its name
@@ -45,6 +39,7 @@ class Form<T>(values: T) : FormState<T> {
         }
     }
 
+
     /**
      * Create a map of fields from the given values
      */
@@ -55,34 +50,57 @@ class Form<T>(values: T) : FormState<T> {
             }.map { field ->
                 when (field.type) {
                     String::class.java -> FormField(
-                        ".${field.name}",
-                        isDirty = mutableStateOf(
-                            (readInstanceProperty<String?>(
-                                clazz,
-                                field.name
-                            )) != null && (readInstanceProperty<String?>(
-                                clazz,
-                                field.name
-                            )) != ""
+                        field.name,
+                        initialIsDirty = (readInstanceProperty<String?>(
+                            clazz,
+                            field.name
+                        )) != null && (readInstanceProperty<String?>(
+                            clazz,
+                            field.name
+                        )) != "",
+                        initialValue = readInstanceProperty<String?>(
+                            clazz,
+                            field.name
                         ),
-                        fieldValue = mutableStateOf(readInstanceProperty<String?>(clazz, field.name)),
-                        errors = mutableStateOf(emptyList()),
-                        isTouched = mutableStateOf(false),
-                        validator = mutableStateOf(null),
-                        isValid = mutableStateOf(false),
-                        hasFocus = mutableStateOf(false),
-                        bounds = mutableStateOf(Rect.Zero),
+                        initialIsTouched = false,
+                        initialIsValid = false,
+                        initialHasFocus = false,
+                        initialBounds = Rect.Zero,
+                        initialErrors = emptyList(),
+                        initialValidator = null,
                     )
+
+                    Int::class.java -> FormField(
+                        field.name,
+                        initialIsDirty = (readInstanceProperty<Int?>(
+                            clazz,
+                            field.name
+                        )) != null && (readInstanceProperty<Int?>(
+                            clazz,
+                            field.name
+                        )) != 0,
+                        initialValue = readInstanceProperty<Int?>(
+                            clazz,
+                            field.name
+                        ),
+                        initialIsTouched = false,
+                        initialIsValid = false,
+                        initialHasFocus = false,
+                        initialBounds = Rect.Zero,
+                        initialErrors = emptyList(),
+                        initialValidator = null,
+                    )
+
                     else -> FormField(
-                        ".${field.name}",
-                        isDirty = mutableStateOf((readInstanceProperty<Any?>(clazz, field.name)) != null),
-                        fieldValue = mutableStateOf(readInstanceProperty(clazz, field.name)),
-                        errors = mutableStateOf(emptyList()),
-                        isTouched = mutableStateOf(false),
-                        validator = mutableStateOf(null),
-                        isValid = mutableStateOf(false),
-                        hasFocus = mutableStateOf(false),
-                        bounds = mutableStateOf(Rect.Zero),
+                        field.name,
+                        initialValue = readInstanceProperty(clazz, field.name),
+                        initialIsDirty = (readInstanceProperty<Any?>(clazz, field.name)) != null,
+                        initialIsTouched = false,
+                        initialIsValid = false,
+                        initialHasFocus = false,
+                        initialBounds = Rect.Zero,
+                        initialErrors = emptyList(),
+                        initialValidator = null,
                     )
                 }
             }
@@ -98,7 +116,7 @@ class Form<T>(values: T) : FormState<T> {
         var isValid = true
         formFields.forEach { (_, field) ->
             field.validate()
-            if (field.errors.value.isNotEmpty()) {
+            if (field.errors.isNotEmpty()) {
                 isValid = false
             }
         }
@@ -110,7 +128,7 @@ class Form<T>(values: T) : FormState<T> {
      *
      * @return The value of the property.
      */
-    override fun getValues(): Map<String, Any?> {
+    override fun getValues(): Map<String, *> {
         val values = formFields.map { (key, value) ->
             key to value.value
         }.toMap()
@@ -139,9 +157,19 @@ class Form<T>(values: T) : FormState<T> {
      * @return The bound as [Rect] of the field
      */
     override fun getFirstErrorBounds(): Rect {
-        val firstError = formFieldsOrder.firstOrNull { formFields[it]?.hasError == true }
-        return formFields[firstError]?.bounds?.value ?: Rect.Zero
+        val firstError =
+            formFieldsOrder.firstOrNull { formFields[it]?.errors?.isNotEmpty() == true }
+        return formFields[firstError]?.fieldBounds ?: Rect.Zero
     }
+
+    override fun handleSubmit(onSubmit: (Map<String, *>) -> Unit): Boolean {
+        val isValid = validate()
+        if (isValid) {
+            onSubmit(getValues())
+        }
+        return isValid
+    }
+
 }
 
 
@@ -152,7 +180,7 @@ class Form<T>(values: T) : FormState<T> {
  * @return The value of the property.
  */
 @Suppress("UNCHECKED_CAST")
-fun <IType> readInstanceProperty(instance: Any?, propertyName: String): IType {
+private fun <IType> readInstanceProperty(instance: Any?, propertyName: String): IType {
     if (instance == null) {
         throw Exception("Instance is null")
     }

@@ -17,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
+import androidx.compose.material.Switch
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
@@ -28,7 +29,8 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
-import dev.talut.jetpackcomposeform.form.ComposeForm
+import dev.talut.jetpackcomposeform.form.rememberForm
+import dev.talut.jetpackcomposeform.formField.Field
 import dev.talut.jetpackcomposeform.ui.theme.JetpackcomposeformTheme
 import io.konform.validation.Validation
 import io.konform.validation.jsonschema.minLength
@@ -64,27 +66,8 @@ class MainActivity : ComponentActivity() {
 
 
 @Composable
-fun <VType> rememberForm(initial: VType): ComposeForm<VType> {
-    return remember(initial) {
-        ComposeForm(initial)
-    }
-}
-
-val buildingNameValidation = Validation {
-    minLength(2)
-    pattern("[a-zA-Z]+")
-}
-
-val emailValidation = Validation {
-    minLength(2)
-    pattern("[a-zA-Z]+")
-}
-
-@Composable
 fun FormTest() {
-    val form = rememberForm(
-        TestForm()
-    )
+    val form = rememberForm(TestForm())
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
     Column(
@@ -96,28 +79,18 @@ fun FormTest() {
 
         Log.d("Form", "Form RENDERED")
 
-        Field<String>(
+        Field<String?>(
             field = form.getField("buildingName"),
-            onBlur = {
-                Log.d("Form", "Building name blurred")
-            },
-            onFocus = {
-                Log.d("Form", "Building name focused")
-            },
         ) { field ->
             TextField(
                 modifier = Modifier
                     .fillMaxWidth()
                     .onFocusChanged(field::onFocusChange),
-                isError = field.errors.isNotEmpty(),
-                value = field.value,
-                onValueChange = {
-                    field.onValueChange(it, field.errors.isNotEmpty())
-                },
+                value = field.value ?: "",
+                onValueChange = field::onValueChange,
             )
             Text(text = "Name: ${field.value}")
             Text(text = "Name has focus: ${field.hasFocus}")
-            Text(text = "Name has errors: ${field.errors.isNotEmpty()}")
             Text(text = "Name is valid: ${field.isValid}")
             Text(text = "Name is dirty: ${field.isDirty}")
             Text(text = "Name is touched: ${field.isTouched}")
@@ -125,9 +98,11 @@ fun FormTest() {
 
         Field<String>(
             field = form.getField("buildingNumber"),
-            validator = Validation {
-                minLength(2)
-                pattern("[a-zA-Z]+")
+            onBlur = {
+                Log.d("Form", "Building number blurred")
+            },
+            onFocus = {
+                Log.d("Form", "Building number focused")
             },
         ) { field ->
             TextField(
@@ -136,84 +111,95 @@ fun FormTest() {
                     .onFocusChanged(field::onFocusChange),
                 value = field.value,
                 isError = field.errors.isNotEmpty(),
-                onValueChange = {
-                    field.onValueChange(it)
-                },
+                onValueChange = field::onValueChange,
             )
             Text(text = "Number: ${field.value}")
             Text(text = "Number has focus: ${field.hasFocus}")
-            Text(text = "Number has errors: ${field.errors.isNotEmpty()}")
+            Text(text = "Number has errors: ${field.errors}")
             Text(text = "Number is valid: ${field.isValid}")
             Text(text = "Number is dirty: ${field.isDirty}")
             Text(text = "Number is touched: ${field.isTouched}")
         }
 
-        Field<Int>(
+        Field<Int?>(
             field = form.getField("age"),
         ) { field ->
             TextField(
                 modifier = Modifier
                     .fillMaxWidth()
                     .onFocusChanged(field::onFocusChange),
-                value = field.value.takeIf { it > 0 }?.toString() ?: "",
+                value = field.value?.takeIf { it > 0 }?.toString() ?: "",
                 isError = field.errors.isNotEmpty(),
                 onValueChange = { value ->
-                    Log.d("Form", "Value: $value")
-                    field.onValueChange(value.toIntOrNull() ?: 0, false)
+                    field.onValueChange(value.toIntOrNull() ?: 0)
                 },
             )
-            Text(text = "Age: ${field.value.takeIf { it > 0 }?.toString() ?: ""}")
+
+            Text(text = "Age: ${field.value}")
             Text(text = "Age has focus: ${field.hasFocus}")
-            Text(text = "Age has errors: ${field.errors.isNotEmpty()}")
+            Text(text = "Age has errors: ${field.errors}")
             Text(text = "Age is valid: ${field.isValid}")
             Text(text = "Age is dirty: ${field.isDirty}")
             Text(text = "Age is touched: ${field.isTouched}")
         }
 
+        Field(
+            field = form.getField("sendEmail"),
+        ) { field ->
+            Switch(
+                checked = field.value,
+                onCheckedChange = field::onValueChange,
+            )
+
+            Text(text = "Send Email: ${field.value}")
+        }
+
         Spacer(modifier = Modifier.height(1000.dp))
 
         Button(onClick = {
-            form.handleSubmit(::onSubmit)
-            /*
-              if () {
-                  coroutineScope.launch {
-                      val firstInvalidField = form.getFirstErrorBounds().top
-                      scrollState.animateScrollTo(firstInvalidField.toInt())
-                  }
-              }
-             */
+            form.handleSubmit { formValues ->
+                val values = Gson().fromJson(Gson().toJson(formValues), TestForm::class.java)
+                val validationResult: Map<String, String> = validate(values).errors.associate {
+                    it.dataPath.split(".").last() to it.message
+                }
+                val isValid = form.handleValidation(validationResult)
+
+                if (isValid) {
+                    Log.d("Form", values.toString())
+                } else {
+                    coroutineScope.launch {
+                        val firstInvalidField = form.getFirstErrorBounds().top
+                        scrollState.animateScrollTo(firstInvalidField.toInt())
+                    }
+                }
+            }
         }) {
             Text(text = "Submit")
         }
     }
 }
 
-fun onSubmit(values: Map<String, *>) {
-    val vvv = Gson().fromJson(Gson().toJson(values), TestForm::class.java)
-    val isValid = validate(vvv)
-    Log.d("Form", "isValid: $isValid")
-}
-
 data class TestForm(
     @SerializedName("buildingName")
-    val buildingName: String = "",
+    val buildingName: String? = null,
     @SerializedName("buildingNumber")
     val buildingNumber: String = "",
     @SerializedName("age")
-    val age: Int = 0,
+    val age: Number? = null,
+    @SerializedName("sendEmail")
+    val sendEmail: Boolean = false,
 )
-
 
 val validate = Validation {
     TestForm::age required {
         minimum(18)
     }
-    TestForm::buildingName required {
+    TestForm::buildingName ifPresent {
         minLength(2)
         pattern("[a-zA-Z]+")
     }
     TestForm::buildingNumber required {
         minLength(2)
-        pattern("[a-zA-Z]+")
     }
 }
+

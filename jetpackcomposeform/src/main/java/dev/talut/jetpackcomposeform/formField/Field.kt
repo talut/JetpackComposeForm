@@ -1,4 +1,4 @@
-package dev.talut.jetpackcomposeform
+package dev.talut.jetpackcomposeform.formField
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
@@ -15,9 +15,20 @@ fun <VType> Field(
     modifier: Modifier = Modifier,
     onBlur: () -> Unit = {},
     onFocus: () -> Unit = {},
+    validateOnChange: Boolean = false,
+    validateOnBlur: Boolean = true,
     validator: Validation<VType>? = null,
     content: @Composable (FormField<VType>) -> Unit
 ) {
+
+    LaunchedEffect(validateOnChange) {
+        field.validateOnChange = validateOnChange
+    }
+
+    LaunchedEffect(validateOnBlur) {
+        field.validateOnBlur = validateOnBlur
+    }
+
     LaunchedEffect(validator) {
         validator?.let { field.fieldValidator = it }
     }

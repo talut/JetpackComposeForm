@@ -30,6 +30,8 @@ class FormField<T>(
     var isDirty by mutableStateOf(initialIsDirty)
     var hasFocus by mutableStateOf(initialHasFocus)
     var isValid by mutableStateOf(initialIsValid)
+    var validateOnChange by mutableStateOf(false)
+    var validateOnBlur by mutableStateOf(true)
 
     /**
      * Validate the field value
@@ -49,6 +51,9 @@ class FormField<T>(
                     isValid = true
                     errors = emptyList()
                 }
+            } ?: run {
+                isValid = true
+                errors = emptyList()
             }
         }
     }
@@ -71,13 +76,15 @@ class FormField<T>(
      * Called when the field is blurred
      */
     private fun onBlur() {
-        this.validate()
+        if (validateOnBlur) {
+            this.validate()
+        }
     }
 
     /**
      * Called when the field value changes
      */
-    fun onValueChange(newValue: T, validateOnChange: Boolean = false) {
+    fun onValueChange(newValue: T) {
         value = newValue
         isDirty = true
         if (validateOnChange) {

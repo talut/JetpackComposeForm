@@ -2,7 +2,6 @@ package dev.talut.jetpackcomposeform.form
 
 import androidx.compose.ui.geometry.Rect
 import dev.talut.jetpackcomposeform.formField.FormField
-import io.konform.validation.Validation
 
 interface ComposeFormState<T> {
 
@@ -44,8 +43,19 @@ interface ComposeFormState<T> {
     fun getFirstErrorBounds(): Rect
 
 
+    /**
+     * Submit the form
+     * @param onSubmit The callback to be called when the form is submitted
+     * @return true if the form is valid
+     */
     fun handleSubmit(onSubmit: (Map<String, *>) -> Unit): Boolean
 
+    /**
+     * Handle the validation of the form
+     * @param errors The errors map
+     * @return true if the form is valid
+     */
+    fun handleValidation(errors: Map<String, String>): Boolean
 }
 
 
